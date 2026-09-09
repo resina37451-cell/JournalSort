@@ -1,5 +1,7 @@
 # Scientific Research Tools
 
+https://resina37451-cell.github.io/JournalSort/
+
 A single-file, no-backend web app that bundles three small utilities used in systematic reviews / meta-analyses. Everything runs entirely in the browser — no server, no build step, no dependencies.
 
 **🌐 Bilingual** — Portuguese and English, switchable at any time with the language button in the header.
