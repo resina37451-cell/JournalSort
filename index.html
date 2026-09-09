@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferramentas de Pesquisa Científica</title>
+<style>
+/* ── Tab navigation ──────────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  background: var(--bg-alt);
+  border-bottom: 2px solid var(--border);
+  padding: 0 24px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Classifier-specific styles ──────────────────────────────────────────── */
+.classifier-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 98px);
+}
+
+.classifier-sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.classifier-main {
+  padding: 28px 28px 48px;
+  overflow: auto;
+}
+
+.sidebar-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.sidebar-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-steps li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.84rem;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.step-num {
+  min-width: 22px;
+  height: 22px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sidebar-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.area-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.area-chip {
+  font-size: 0.76rem;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-weight: 600;
+  background: rgba(156,104,218,0.12);
+  color: var(--accent);
+}
+
+.area-chip.med   { background: rgba(27,190,129,0.12);  color: var(--success); }
+.area-chip.out   { background: rgba(255,165,0,0.12);   color: #c87800; }
+.area-chip.multi { background: rgba(100,100,120,0.12); color: var(--text-muted); }
+
+[data-theme="dark"] .area-chip.out { color: #ffa500; }
+
+/* Input area */
+.input-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.input-card label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+#llm-input {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+#llm-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Review table */
+.review-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.review-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  min-width: 700px;
+}
+
+.review-table thead tr {
+  background: var(--surface2);
+  border-bottom: 2px solid var(--border);
+}
+
+.review-table thead th {
+  padding: 10px 12px;
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.review-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.review-table tbody tr:last-child { border-bottom: none; }
+.review-table tbody tr:hover { background: var(--surface2); }
+
+.review-table tbody td {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+.review-table .cell-journal {
+  min-width: 180px;
+}
+
+.editable-cell {
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.editable-cell:hover { border-color: var(--border); background: var(--bg); }
+.editable-cell:focus { outline: none; border-color: var(--accent); background: var(--bg); box-shadow: var(--shadow-focus); }
+
+.review-select {
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.review-select:focus { outline: none; border-color: var(--accent); box-shadow: var(--shadow-focus); }
+
+.conf-high   { color: #1bbe81; font-weight: 700; }
+.conf-medium { color: #e8a020; font-weight: 700; }
+.conf-low    { color: #d04060; font-weight: 700; }
+
+.btn-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.btn-remove:hover { background: rgba(200,0,40,0.1); color: #c82040; border-color: rgba(200,0,40,0.3); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+.empty-state .es-icon { font-size: 2.2rem; display: block; margin-bottom: 8px; opacity: 0.5; }
+
+.row-count-bar {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.export-success {
+  display: none;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  color: var(--success);
+  margin-top: 10px;
+}
+
+/* ── Prompt tab styles ───────────────────────────────────────────────────── */
+.prompt-layout {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+.prompt-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.prompt-hero-icon { font-size: 2.2rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.prompt-hero-text h2 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.prompt-hero-text p { font-size: 0.86rem; color: var(--text-muted); line-height: 1.6; }
+.prompt-steps { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+.prompt-step {
+  flex: 1; min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex; gap: 12px; align-items: flex-start;
+  box-shadow: var(--shadow);
+}
+.prompt-step .step-num {
+  background: var(--accent); color: var(--accent-text);
+  min-width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+}
+.prompt-step-body { font-size: 0.84rem; line-height: 1.5; color: var(--text); }
+.prompt-step-body strong { display: block; margin-bottom: 2px; }
+.prompt-step-body a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.prompt-step-body a:hover { text-decoration: underline; }
+.prompt-shell {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.prompt-shell-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.prompt-shell-title {
+  font-size: 0.76rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: 7px;
+}
+.prompt-shell-title::before {
+  content: ''; display: inline-block;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); opacity: 0.7;
+}
+.btn-copy {
+  background: var(--accent); color: var(--accent-text);
+  border: none; border-radius: var(--radius);
+  font-size: 0.8rem; font-weight: 700; font-family: inherit;
+  padding: 6px 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-copy:hover { background: var(--accent-hover); }
+.btn-copy:active { transform: scale(0.97); }
+.btn-copy.copied { background: var(--success); }
+.prompt-text {
+  padding: 20px 22px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem; line-height: 1.75;
+  color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 520px; overflow-y: auto;
+  user-select: text;
+}
+.prompt-tip {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 0.83rem; color: var(--text-muted); line-height: 1.6;
+}
+.prompt-tip strong { color: var(--text); }
+
+/* ── ZorinPurple token system ────────────────────────────────────────────── */
+/* Light  (from ZorinPurple-Light/gtk-3.0/gtk.css)                           */
+/* Dark   (from ZorinPurple-Dark/gtk-3.0/gtk.css)                            */
+
+:root {
+  /* Light palette */
+  --bg:           #f2eef5;   /* .background background-color */
+  --bg-alt:       #f9f7fa;   /* textview border               */
+  --surface:      #ffffff;   /* .view background-color        */
+  --surface2:     #ece6f0;   /* hover tint                    */
+  --border:       #e5dfe8;   /* entry box-shadow              */
+  --text:         #402b4d;   /* .background color             */
+  --text-muted:   #998da1;   /* label:disabled                */
+  --accent:       #9c68da;   /* .accent / selection           */
+  --accent-hover: #813fd0;   /* button suggested hover        */
+  --accent-text:  #ffffff;
+  --header-bg:    #682bb1;   /* headerbar background          */
+  --header-text:  #ffffff;
+  --success:      #1bbe81;
+  --success-bg:   #e6faf3;
+  --success-border:#a5dfc8;
+  --radius:       9px;
+  --radius-lg:    15px;
+  --shadow:       0 2px 8px rgba(64,43,77,0.10);
+  --shadow-focus: 0 2px 4px rgba(64,43,77,0.075), inset 0 0 0 2px rgba(156,104,218,0.5);
+}
+
+[data-theme="dark"] {
+  /* Dark palette (ZorinPurple-Dark/gtk-3.0/gtk.css) */
+  --bg:           #28232d;
+  --bg-alt:       #1a171d;
+  --surface:      #1a171d;
+  --surface2:     #41394a;
+  --border:       #3d3447;
+  --text:         #d8c4f1;
+  --text-muted:   #80748f;
+  --accent:       #d8c4f1;
+  --accent-hover: #c9b0e8;
+  --accent-text:  #1a171d;
+  --header-bg:    #1a171d;
+  --header-text:  #d8c4f1;
+  --success:      #2ac88d;
+  --success-bg:   #1a2e27;
+  --success-border:#2a5442;
+  --shadow:       0 2px 8px rgba(0,0,0,0.35);
+  --shadow-focus: 0 2px 4px rgba(0,0,0,0.3), inset 0 0 0 2px rgba(216,196,241,0.5);
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Cantarell', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  padding: 0 24px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+
+.header-icon {
+  width: 22px; height: 22px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+
+header h1 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  opacity: 0.95;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius);
+  color: var(--header-text);
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+/* ── Upload ──────────────────────────────────────────────────────────────── */
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.upload-area:hover, .upload-area.dragover {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+.upload-area input[type="file"] { display: none; }
+.upload-icon { font-size: 2rem; margin-bottom: 8px; display: block; opacity: 0.7; }
+.upload-area p { font-size: 0.9rem; color: var(--text-muted); }
+.upload-area strong { color: var(--text); }
+
+#file-info {
+  display: none;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  color: var(--success);
+  margin-top: 12px;
+}
+
+/* ── Section label ───────────────────────────────────────────────────────── */
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.count-badge {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  padding: 7px 16px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:not(:disabled):hover { box-shadow: var(--shadow); }
+
+.btn-flat {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-flat:not(:disabled):hover { background: var(--border); }
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.btn-accent:not(:disabled):hover { background: var(--accent-hover); }
+
+.btn-export {
+  background: var(--success);
+  color: #fff;
+}
+.btn-export:not(:disabled):hover { filter: brightness(0.9); }
+
+/* ── Fields table ────────────────────────────────────────────────────────── */
+.fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.fields-table thead tr {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.fields-table thead th {
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+.fields-table thead th:first-child { width: 44px; text-align: center; }
+.fields-table thead th:nth-child(2) { width: 110px; }
+
+.fields-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.fields-table tbody tr:last-child { border-bottom: none; }
+.fields-table tbody tr:hover { background: var(--surface2); }
+.fields-table tbody tr.checked { background: rgba(156,104,218,0.08); }
+[data-theme="dark"] .fields-table tbody tr.checked { background: rgba(216,196,241,0.08); }
+
+.fields-table tbody td {
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  vertical-align: middle;
+  color: var(--text);
+}
+.fields-table tbody td:first-child { text-align: center; }
+
+.fields-table input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.field-tag {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(156,104,218,0.12);
+  border-radius: 5px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+[data-theme="dark"] .field-tag {
+  color: var(--accent);
+  background: rgba(216,196,241,0.12);
+}
+
+.field-tag.grouped {
+  color: var(--success);
+  background: rgba(27,190,129,0.12);
+}
+
+/* ── Action bar ──────────────────────────────────────────────────────────── */
+.action-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+/* ── Dedup bar ───────────────────────────────────────────────────────────── */
+.dedup-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.dedup-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dedup-toggle input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+#dedup-field {
+  flex: 1;
+  min-width: 200px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+#dedup-field:not(:disabled):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+#dedup-field:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Preview ─────────────────────────────────────────────────────────────── */
+#preview-section { display: none; }
+
+#preview-box {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  line-height: 1.8;
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+.stats {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-icon">🔬</div>
+    <h1 data-i18n="appTitle">Ferramentas de Pesquisa Científica</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="theme-toggle" onclick="toggleLanguage()" id="lang-btn">🇺🇸 EN</button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Escuro</button>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('ris')" id="tab-ris">
+    <span data-i18n="tabRis">📄 Extrator RIS</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('prompt')" id="tab-prompt">
+    <span data-i18n="tabPrompt">🤖 Prompt DeepSeek</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('classifier')" id="tab-classifier">
+    <span data-i18n="tabClassifier">🏷️ Classificador de Periódicos</span>
+  </button>
+</nav>
+
+<!-- TAB 1: RIS Extractor -->
+<div class="tab-panel active" id="panel-ris">
+<div class="container">
+
+  <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+    <span class="upload-icon">📂</span>
+    <p data-i18n-html="uploadInstruction"><strong>Clique para selecionar</strong> ou arraste seu arquivo <strong>.ris</strong> aqui</p>
+    <input type="file" id="file-input" accept=".ris,.txt">
+    <div id="file-info"></div>
+  </div>
+
+  <p class="section-label" data-i18n="availableFields">Campos disponíveis</p>
+
+  <div class="toolbar">
+    <button class="btn btn-flat" onclick="selectAll()" data-i18n="selectAll">Marcar todos</button>
+    <button class="btn btn-flat" onclick="deselectAll()" data-i18n="deselectAll">Desmarcar todos</button>
+    <span class="count-badge" id="selected-count">0 campos selecionados</span>
+  </div>
+
+  <table class="fields-table">
+    <thead>
+      <tr>
+        <th>✓</th>
+        <th data-i18n="acronymHeader">Sigla</th>
+        <th data-i18n="meaningHeader">Significado (campo)</th>
+      </tr>
+    </thead>
+    <tbody id="fields-body"></tbody>
+  </table>
+
+  <!-- Desduplicação -->
+  <p class="section-label" data-i18n="removeDuplicates">Remover duplicatas</p>
+  <div class="dedup-bar">
+    <label class="dedup-toggle">
+      <input type="checkbox" id="dedup-on" onchange="updateDedupSelect()">
+      <span data-i18n="enableDedup">Ativar desduplicação</span>
+    </label>
+    <select id="dedup-field" disabled onchange="updateDedupInfo()">
+      <option value="" data-i18n="dedupPlaceholder">— escolha o campo-chave —</option>
+    </select>
+    <span class="count-badge" id="dedup-info"></span>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-accent" onclick="generatePreview()" id="btn-preview" disabled data-i18n="preview">Pré-visualizar</button>
+    <button class="btn btn-export"  onclick="exportTXT()"       id="btn-export"  disabled data-i18n="exportTXT">⬇ Exportar TXT</button>
+  </div>
+
+  <div id="preview-section">
+    <p class="section-label" data-i18n="preview">Pré-visualização</p>
+    <p class="stats" id="stats-text"></p>
+    <div id="preview-box"></div>
+  </div>
+
+</div>
+</div><!-- end panel-ris -->
+
+<!-- TAB 2: Prompt DeepSeek -->
+<div class="tab-panel" id="panel-prompt">
+  <div class="prompt-layout">
+
+    <!-- Hero -->
+    <div class="prompt-hero">
+      <div class="prompt-hero-icon">🤖</div>
+      <div class="prompt-hero-text">
+        <h2 data-i18n="promptHeroTitle">Prompt para classificação de periódicos</h2>
+        <p data-i18n="promptHeroDesc">Use este prompt no DeepSeek para classificar automaticamente sua lista de periódicos. Copie o prompt, cole no DeepSeek, substitua a lista e traga o resultado para a próxima aba.</p>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="prompt-steps">
+      <div class="prompt-step">
+        <span class="step-num">1</span>
+        <div class="prompt-step-body" data-i18n-html="promptStep1">
+          <strong>Copie o prompt</strong>
+          Clique em <em>Copiar prompt</em> abaixo e cole no DeepSeek.
+          <br><a href="https://chat.deepseek.com/" target="_blank" rel="noopener">↗ Abrir DeepSeek</a>
+        </div>
+      </div>
+      <div class="prompt-step">
+        <span class="step-num">2</span>
+        <div class="prompt-step-body" data-i18n-html="promptStep2">
+          <strong>Cole sua lista</strong>
+          Substitua <code style="font-size:0.77rem;background:var(--surface2);padding:1px 5px;border-radius:4px;">[cole aqui sua lista]</code> pelos nomes dos periódicos, um por linha.
+        </div>
+      </div>
+      <div class="prompt-step">
+        <span class="step-num">3</span>
+        <div class="prompt-step-body" data-i18n-html="promptStep3">
+          <strong>Cole o resultado</strong>
+          Copie a tabela gerada e cole na aba <em>🏷️ Classificador de Periódicos</em> para revisar e exportar o JSON.
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompt shell -->
+    <div class="prompt-shell">
+      <div class="prompt-shell-header">
+        <span class="prompt-shell-title" data-i18n="promptReady">Prompt pronto para uso</span>
+        <button class="btn-copy" id="btn-copy-prompt" onclick="copyPrompt()">
+          <span id="copy-icon">📋</span>
+          <span id="copy-label" data-i18n="copyPrompt">Copiar prompt</span>
+        </button>
+      </div>
+      <div class="prompt-text" id="prompt-text-content" data-i18n="promptContent">Você é um especialista em classificação de periódicos científicos.
+
+Abaixo está uma lista de periódicos. Para cada um, classifique a ÁREA PRINCIPAL usando apenas uma das categorias abaixo:
+
+CATEGORIAS:
+- Odontologia
+- Medicina
+- Enfermagem
+- Farmácia
+- Saúde Pública
+- Multidisciplinar em Saúde
+- Biologia / Ciências Básicas
+- Engenharia / Tecnologia
+- Outra área (especifique)
+
+REGRAS:
+- Responda SOMENTE com uma tabela markdown, sem nenhum texto antes ou depois, sem título, sem introdução, sem conclusão, sem numeração de itens fora da tabela
+- A tabela deve ter as colunas: # | Periódico | Área Principal | Confiança | Áreas Secundárias
+- Confiança ALTA = nome do periódico deixa claro a área
+- Confiança MÉDIA = é possível inferir pela especialidade, mas não é óbvio
+- Confiança BAIXA = periódico genérico ou desconhecido, difícil de classificar
+- Se um periódico puder pertencer a mais de uma área, escolha a PRINCIPAL e anote as secundárias na coluna "Áreas Secundárias"; caso não haja secundárias, deixe com "-"
+- Não invente informações. Se não reconhecer o periódico, marque confiança BAIXA
+- Não interrompa a tabela mesmo que a lista seja longa. A resposta deve ser uma única tabela contínua do primeiro ao último periódico
+
+LISTA DE PERIÓDICOS:
+[cole aqui sua lista, um por linha]</div>
+    </div>
+
+    <div class="prompt-tip" data-i18n-html="promptTip">
+      <strong>💡 Dica:</strong> Após colar a lista de periódicos no lugar indicado, envie o prompt. O DeepSeek retornará uma tabela markdown — copie-a inteira (incluindo o cabeçalho) e cole no campo de entrada da aba <strong>🏷️ Classificador de Periódicos</strong>.
+    </div>
+
+  </div>
+</div><!-- end panel-prompt -->
+
+<!-- TAB 3: Journal Classifier -->
+<div class="tab-panel" id="panel-classifier">
+  <div class="classifier-layout">
+
+    <!-- Sidebar -->
+    <aside class="classifier-sidebar">
+      <div>
+        <p class="sidebar-title" data-i18n="howToUse">Como usar</p>
+        <ol class="sidebar-steps">
+          <li><span class="step-num">1</span><span data-i18n-html="classifierStep1">Cole a tabela markdown gerada pela LLM no campo de entrada e clique em <strong>Processar</strong>.</span></li>
+          <li><span class="step-num">2</span><span data-i18n-html="classifierStep2">Revise e corrija as linhas na tabela — nome, área, confiança e áreas secundárias são todos editáveis.</span></li>
+          <li><span class="step-num">3</span><span data-i18n-html="classifierStep3">Clique em <strong>Exportar JSON</strong> para baixar o arquivo padronizado.</span></li>
+        </ol>
+      </div>
+
+      <hr class="sidebar-divider">
+
+      <div>
+        <p class="sidebar-title" data-i18n="availableAreas">Áreas disponíveis</p>
+        <div class="area-legend">
+          <span class="area-chip" data-i18n="areaDentistry">Dentistry</span>
+          <span class="area-chip med" data-i18n="areaMedicine">Medicine — Other area</span>
+          <span class="area-chip out" data-i18n="areaOutside">Outside Health</span>
+          <span class="area-chip multi" data-i18n="areaMulti">Multidisciplinary — Area unclear</span>
+        </div>
+      </div>
+
+      <hr class="sidebar-divider">
+
+      <div>
+        <p class="sidebar-title" data-i18n="expectedFormat">Formato esperado</p>
+        <p style="font-size:0.77rem;color:var(--text-muted);line-height:1.6;" data-i18n-html="expectedFormatDesc">
+          Tabela markdown com colunas:<br>
+          <code style="font-size:0.74rem;background:var(--surface2);padding:1px 4px;border-radius:4px;">Periódico | Área | Confiança | Áreas secundárias</code>
+        </p>
+      </div>
+    </aside>
+
+    <!-- Main area -->
+    <main class="classifier-main">
+
+      <!-- Input -->
+      <div class="input-card">
+        <label for="llm-input" data-i18n="llmInputLabel">Entrada da LLM — tabela markdown</label>
+        <textarea id="llm-input" data-i18n-placeholder="llmInputPlaceholder" placeholder="Cole aqui a tabela gerada pela LLM...&#10;&#10;Exemplo:&#10;| Periódico | Área | Confiança | Áreas secundárias |&#10;| Journal of Dental Research | Odontologia | high | Biologia oral |&#10;| PLOS ONE | Multidisciplinar | low | |"></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-accent" onclick="processLLMInput()" data-i18n="process">▶ Processar</button>
+          <label class="btn btn-flat" style="cursor:pointer;margin:0;">
+            <span data-i18n="loadFile">📂 Carregar arquivo (.txt/.md)</span>
+            <input type="file" id="llm-file-input" accept=".txt,.md,.markdown,text/plain" style="display:none;" onchange="handleFileUpload(event)">
+          </label>
+          <button class="btn btn-flat" onclick="clearClassifier()" data-i18n="clearAll">✕ Limpar tudo</button>
+          <span id="parse-status" style="font-size:0.8rem;color:var(--text-muted);"></span>
+        </div>
+        <p id="file-upload-status" style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;"></p>
+        <p style="font-size:0.76rem;color:var(--text-muted);margin-top:6px;line-height:1.5;" data-i18n="fileUploadHint">💡 Para tabelas muito grandes (dezenas ou centenas de milhares de linhas), não cole no campo acima — use "Carregar arquivo" com um .txt/.md contendo a tabela markdown. Isso evita travar o navegador.</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+        <p class="section-label" style="margin:0;" data-i18n="reviewTable">Tabela de revisão</p>
+        <button class="btn btn-flat" onclick="addBlankRow()" style="margin-left:4px;" data-i18n="addRow">+ Adicionar linha</button>
+        <input type="text" id="search-input" class="editable-cell" style="max-width:220px;border:1px solid var(--border);background:var(--bg-alt);" data-i18n-placeholder="searchPlaceholder" placeholder="Buscar periódico..." oninput="handleSearchInput()">
+        <span class="row-count-bar" id="row-count" style="margin-left:auto;"></span>
+      </div>
+
+      <!-- Review table -->
+      <div class="review-table-wrap">
+        <table class="review-table">
+          <thead>
+            <tr>
+              <th style="width:32%" data-i18n="journalHeader">Periódico</th>
+              <th style="width:24%" data-i18n="mainAreaHeader">Área principal</th>
+              <th style="width:13%" data-i18n="confidenceHeader">Confiança</th>
+              <th data-i18n="secondaryHeader">Áreas secundárias</th>
+              <th style="width:52px;text-align:center;">✕</th>
+            </tr>
+          </thead>
+          <tbody id="review-tbody">
+            <tr><td colspan="5"><div class="empty-state"><span class="es-icon">📋</span><span data-i18n="emptyState">Cole uma tabela e clique em Processar para começar.</span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-bar" id="pagination-bar" style="display:none;">
+        <button class="btn btn-flat" onclick="goToPage(1)" data-i18n="firstPage">« Primeira</button>
+        <button class="btn btn-flat" onclick="goToPage(currentPage - 1)" data-i18n="prevPage">‹ Anterior</button>
+        <span id="page-indicator" style="font-size:0.82rem;color:var(--text);white-space:nowrap;padding:0 4px;"></span>
+        <button class="btn btn-flat" onclick="goToPage(currentPage + 1)" data-i18n="nextPage">Próxima ›</button>
+        <button class="btn btn-flat" onclick="goToPage(totalPages())" data-i18n="lastPage">Última »</button>
+        <label style="font-size:0.8rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;margin-left:auto;">
+          <span data-i18n="rowsPerPage">Linhas por página</span>
+          <select id="page-size-select" class="review-select" style="width:auto;" onchange="handlePageSizeChange()">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Export -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-export" onclick="exportJSON()" data-i18n="exportJSON">⬇ Exportar JSON</button>
+        <div class="export-success" id="export-ok" data-i18n="exportSuccess">✓ Arquivo JSON baixado com sucesso!</div>
+      </div>
+
+    </main>
+  </div>
+</div><!-- end panel-classifier -->
+
+<script>
+let language = 'pt';
+let loadedFileName = '';
+
+const TRANSLATIONS = {
+  pt: {
+    appTitle: 'Ferramentas de Pesquisa Científica',
+    themeDark: '🌙 Escuro',
+    themeLight: '☀ Claro',
+    tabRis: '📄 Extrator RIS',
+    tabPrompt: '🤖 Prompt DeepSeek',
+    tabClassifier: '🏷️ Classificador de Periódicos',
+    uploadInstruction: '<strong>Clique para selecionar</strong> ou arraste seu arquivo <strong>.ris</strong> aqui',
+    availableFields: 'Campos disponíveis',
+    selectAll: 'Marcar todos',
+    deselectAll: 'Desmarcar todos',
+    selectedCount: n => `${n} campo(s) selecionado(s)`,
+    acronymHeader: 'Sigla',
+    meaningHeader: 'Significado (campo)',
+    removeDuplicates: 'Remover duplicatas',
+    enableDedup: 'Ativar desduplicação',
+    dedupPlaceholder: '— escolha o campo-chave —',
+    preview: 'Pré-visualizar',
+    exportTXT: '⬇ Exportar TXT',
+    previewSection: 'Pré-visualização',
+    records: n => `${n} registro(s)`,
+    uniqueRecords: n => `${n} registro(s) único(s)`,
+    duplicatesRemoved: n => `${n} duplicata(s) removida(s)`,
+    fields: n => `${n} campo(s)`,
+    characters: n => `${n} caracteres`,
+    truncatedPreview: '... [truncado na pré-visualização]',
+    fileInfo: (file, n) => `✓ ${file} — ${n} registro(s) encontrado(s)`,
+    promptHeroTitle: 'Prompt para classificação de periódicos',
+    promptHeroDesc: 'Use este prompt no DeepSeek para classificar automaticamente sua lista de periódicos. Copie o prompt, cole no DeepSeek, substitua a lista e traga o resultado para a próxima aba.',
+    promptStep1: '<strong>Copie o prompt</strong>\nClique em <em>Copiar prompt</em> abaixo e cole no DeepSeek.\n<br><a href="https://chat.deepseek.com/" target="_blank" rel="noopener">↗ Abrir DeepSeek</a>',
+    promptStep2: '<strong>Cole sua lista</strong>\nSubstitua <code style="font-size:0.77rem;background:var(--surface2);padding:1px 5px;border-radius:4px;">[cole aqui sua lista]</code> pelos nomes dos periódicos, um por linha.',
+    promptStep3: '<strong>Cole o resultado</strong>\nCopie a tabela gerada e cole na aba <em>🏷️ Classificador de Periódicos</em> para revisar e exportar o JSON.',
+    promptReady: 'Prompt pronto para uso',
+    copyPrompt: 'Copiar prompt',
+    copied: 'Copiado!',
+    promptTip: '<strong>💡 Dica:</strong> Após colar a lista de periódicos no lugar indicado, envie o prompt. O DeepSeek retornará uma tabela markdown — copie-a inteira (incluindo o cabeçalho) e cole no campo de entrada da aba <strong>🏷️ Classificador de Periódicos</strong>.',
+    howToUse: 'Como usar',
+    classifierStep1: 'Cole a tabela markdown gerada pela LLM no campo de entrada e clique em <strong>Processar</strong>.',
+    classifierStep2: 'Revise e corrija as linhas na tabela — nome, área, confiança e áreas secundárias são todos editáveis.',
+    classifierStep3: 'Clique em <strong>Exportar JSON</strong> para baixar o arquivo padronizado.',
+    availableAreas: 'Áreas disponíveis',
+    areaDentistry: 'Dentistry',
+    areaMedicine: 'Medicine — Other area',
+    areaOutside: 'Outside Health',
+    areaMulti: 'Multidisciplinary — Area unclear',
+    expectedFormat: 'Formato esperado',
+    expectedFormatDesc: 'Tabela markdown com colunas:<br><code style="font-size:0.74rem;background:var(--surface2);padding:1px 4px;border-radius:4px;">Periódico | Área | Confiança | Áreas secundárias</code>',
+    llmInputLabel: 'Entrada da LLM — tabela markdown',
+    llmInputPlaceholder: 'Cole aqui a tabela gerada pela LLM...\n\nExemplo:\n| Periódico | Área | Confiança | Áreas secundárias |\n| Journal of Dental Research | Odontologia | high | Biologia oral |\n| PLOS ONE | Multidisciplinar | low | |',
+    process: '▶ Processar',
+    loadFile: '📂 Carregar arquivo (.txt/.md)',
+    fileUploadHint: '💡 Para tabelas muito grandes (dezenas ou centenas de milhares de linhas), não cole no campo acima — use "Carregar arquivo" com um .txt/.md contendo a tabela markdown. Isso evita travar o navegador.',
+    fileLoaded: (name, n) => `✓ Arquivo carregado: ${name} — ${n} linha(s) de tabela detectada(s).`,
+    fileLoadError: '⚠ Não foi possível ler o arquivo.',
+    processing: 'Processando…',
+    searchPlaceholder: 'Buscar periódico...',
+    firstPage: '« Primeira',
+    prevPage: '‹ Anterior',
+    nextPage: 'Próxima ›',
+    lastPage: 'Última »',
+    rowsPerPage: 'Linhas por página',
+    pageIndicator: (p, total, a, b, n) => `Página ${p} de ${total} — mostrando ${a}–${b} de ${n}`,
+    noResultsSearch: 'Nenhum periódico encontrado para esta busca.',
+    clearAll: '✕ Limpar tudo',
+    reviewTable: 'Tabela de revisão',
+    addRow: '+ Adicionar linha',
+    journalHeader: 'Periódico',
+    mainAreaHeader: 'Área principal',
+    confidenceHeader: 'Confiança',
+    secondaryHeader: 'Áreas secundárias',
+    emptyState: 'Cole uma tabela e clique em Processar para começar.',
+    exportJSON: '⬇ Exportar JSON',
+    exportSuccess: '✓ Arquivo JSON baixado com sucesso!',
+    noTableRecognized: '⚠ Nenhuma linha de tabela reconhecida.',
+    importedLines: n => `✓ ${n} linha(s) importada(s).`,
+    noJournalToExport: '⚠ Nenhuma linha com nome de periódico para exportar.',
+    exportedJournals: n => `✓ ${n} periódico(s) exportado(s) com sucesso!`,
+    noDataYet: 'Nenhum dado ainda. Cole uma tabela ou adicione linhas manualmente.',
+    rowCount: n => `${n} linha(s)`,
+    optional: '(opcional)',
+    removeRow: 'Remover linha',
+    recordLabel: 'REGISTRO',
+    confidenceHigh: 'alta',
+    confidenceMedium: 'média',
+    confidenceLow: 'baixa',
+    promptContent: `Você é um especialista em classificação de periódicos científicos.
+
+Abaixo está uma lista de periódicos. Para cada um, classifique a ÁREA PRINCIPAL usando apenas uma das categorias abaixo:
+
+CATEGORIAS:
+- Odontologia
+- Medicina
+- Enfermagem
+- Farmácia
+- Saúde Pública
+- Multidisciplinar em Saúde
+- Biologia / Ciências Básicas
+- Engenharia / Tecnologia
+- Outra área (especificar)
+
+REGRAS:
+- Responda APENAS com uma tabela em markdown, sem texto antes ou depois dela, sem título, sem introdução, sem conclusão e sem numeração de itens fora da tabela
+- A tabela deve seguir EXATAMENTE o formato do exemplo abaixo, incluindo cabeçalho, ordem das colunas e estilo de alinhamento
+- Confiança ALTA = o nome do periódico deixa a área evidente
+- Confiança MÉDIA = a área pode ser inferida pela especialidade, mas não é óbvia
+- Confiança BAIXA = periódico genérico ou desconhecido, difícil de classificar
+- Se um periódico puder pertencer a mais de uma área, escolha a área PRINCIPAL e indique as áreas secundárias na coluna "Áreas Secundárias"; se não houver áreas secundárias, deixe "-"
+- Não invente informações. Se não reconhecer o periódico, marque confiança BAIXA
+- Não interrompa a tabela mesmo que a lista seja longa. A resposta deve ser uma única tabela contínua, do primeiro ao último periódico
+
+EXEMPLO DE TABELA (siga exatamente este formato):
+
+| # | Periódico | Área Principal | Confiança | Áreas Secundárias |
+|---|:---|:---|:---|:---|
+| 1 | BMC oral health | Odontologia | Alta | - |
+| 2 | Journal of esthetic and restorative dentistry | Odontologia | Alta | - |
+| 3 | Medical science monitor | Medicina | Alta | - |
+| 4 | American journal of dentistry | Odontologia | Alta | - |
+| 5 | Clinical oral investigations | Odontologia | Alta | - |
+| 6 | Restorative dentistry & endodontics | Odontologia | Alta | - |
+| 7 | Journal of dentistry | Odontologia | Alta | - |
+| 8 | Frontiers in dental medicine | Odontologia | Alta | - |
+| 9 | The Journal of prosthetic dentistry | Odontologia | Alta | - |
+| 10 | Journal of prosthodontics | Odontologia | Alta | - |
+| 11 | Journal of Indian Prosthodontic Society | Odontologia | Alta | - |
+| 12 | The journal of contemporary dental practice | Odontologia | Alta | - |
+| 13 | Journal of functional biomaterials | Engenharia / Tecnologia | Alta | Odontologia, Biologia |
+| 14 | Australian dental journal | Odontologia | Alta | - |
+| 15 | Journal of the mechanical behavior of biomedical materials | Engenharia / Tecnologia | Alta | Biologia, Medicina |
+
+LISTA DE PERIÓDICOS:
+[cole aqui sua lista, um por linha]`
+  },
+  en: {
+    appTitle: 'Scientific Research Tools',
+    themeDark: '🌙 Dark',
+    themeLight: '☀ Light',
+    tabRis: '📄 RIS Extractor',
+    tabPrompt: '🤖 DeepSeek Prompt',
+    tabClassifier: '🏷️ Journal Classifier',
+    uploadInstruction: '<strong>Click to select</strong> or drag your <strong>.ris</strong> file here',
+    availableFields: 'Available fields',
+    selectAll: 'Select all',
+    deselectAll: 'Deselect all',
+    selectedCount: n => `${n} field(s) selected`,
+    acronymHeader: 'Tag',
+    meaningHeader: 'Field meaning',
+    removeDuplicates: 'Remove duplicates',
+    enableDedup: 'Enable deduplication',
+    dedupPlaceholder: '— choose the key field —',
+    preview: 'Preview',
+    exportTXT: '⬇ Export TXT',
+    previewSection: 'Preview',
+    records: n => `${n} record(s)`,
+    uniqueRecords: n => `${n} unique record(s)`,
+    duplicatesRemoved: n => `${n} duplicate(s) removed`,
+    fields: n => `${n} field(s)`,
+    characters: n => `${n} characters`,
+    truncatedPreview: '... [truncated in preview]',
+    fileInfo: (file, n) => `✓ ${file} — ${n} record(s) found`,
+    promptHeroTitle: 'Prompt for journal classification',
+    promptHeroDesc: 'Use this prompt in DeepSeek to automatically classify your journal list. Copy the prompt, paste it into DeepSeek, replace the list, and bring the result to the next tab.',
+    promptStep1: '<strong>Copy the prompt</strong>\nClick <em>Copy prompt</em> below and paste it into DeepSeek.\n<br><a href="https://chat.deepseek.com/" target="_blank" rel="noopener">↗ Open DeepSeek</a>',
+    promptStep2: '<strong>Paste your list</strong>\nReplace <code style="font-size:0.77rem;background:var(--surface2);padding:1px 5px;border-radius:4px;">[paste your list here]</code> with the journal names, one per line.',
+    promptStep3: '<strong>Paste the result</strong>\nCopy the generated table and paste it into the <em>🏷️ Journal Classifier</em> tab to review and export the JSON.',
+    promptReady: 'Prompt ready to use',
+    copyPrompt: 'Copy prompt',
+    copied: 'Copied!',
+    promptTip: '<strong>💡 Tip:</strong> After pasting the journal list in the indicated place, send the prompt. DeepSeek will return a markdown table — copy the entire table (including the header) and paste it into the input field in the <strong>🏷️ Journal Classifier</strong> tab.',
+    howToUse: 'How to use',
+    classifierStep1: 'Paste the markdown table generated by the LLM into the input field and click <strong>Process</strong>.',
+    classifierStep2: 'Review and correct the rows in the table — name, area, confidence, and secondary areas are all editable.',
+    classifierStep3: 'Click <strong>Export JSON</strong> to download the standardized file.',
+    availableAreas: 'Available areas',
+    areaDentistry: 'Dentistry',
+    areaMedicine: 'Medicine — Other area',
+    areaOutside: 'Outside Health',
+    areaMulti: 'Multidisciplinary — Area unclear',
+    expectedFormat: 'Expected format',
+    expectedFormatDesc: 'Markdown table with columns:<br><code style="font-size:0.74rem;background:var(--surface2);padding:1px 4px;border-radius:4px;">Journal | Area | Confidence | Secondary areas</code>',
+    llmInputLabel: 'LLM input — markdown table',
+    llmInputPlaceholder: 'Paste the table generated by the LLM here...\n\nExample:\n| Journal | Area | Confidence | Secondary areas |\n| Journal of Dental Research | Dentistry | high | Oral biology |\n| PLOS ONE | Multidisciplinary | low | |',
+    process: '▶ Process',
+    loadFile: '📂 Load file (.txt/.md)',
+    fileUploadHint: '💡 For very large tables (tens or hundreds of thousands of rows), don\'t paste into the field above — use "Load file" with a .txt/.md containing the markdown table. This avoids freezing the browser.',
+    fileLoaded: (name, n) => `✓ File loaded: ${name} — ${n} table row(s) detected.`,
+    fileLoadError: '⚠ Could not read the file.',
+    processing: 'Processing…',
+    searchPlaceholder: 'Search journal...',
+    firstPage: '« First',
+    prevPage: '‹ Prev',
+    nextPage: 'Next ›',
+    lastPage: 'Last »',
+    rowsPerPage: 'Rows per page',
+    pageIndicator: (p, total, a, b, n) => `Page ${p} of ${total} — showing ${a}–${b} of ${n}`,
+    noResultsSearch: 'No journal found for this search.',
+    clearAll: '✕ Clear all',
+    reviewTable: 'Review table',
+    addRow: '+ Add row',
+    journalHeader: 'Journal',
+    mainAreaHeader: 'Main area',
+    confidenceHeader: 'Confidence',
+    secondaryHeader: 'Secondary areas',
+    emptyState: 'Paste a table and click Process to begin.',
+    exportJSON: '⬇ Export JSON',
+    exportSuccess: '✓ JSON file downloaded successfully!',
+    noTableRecognized: '⚠ No recognizable table row found.',
+    importedLines: n => `✓ ${n} row(s) imported.`,
+    noJournalToExport: '⚠ No row with a journal name to export.',
+    exportedJournals: n => `✓ ${n} journal(s) exported successfully!`,
+    noDataYet: 'No data yet. Paste a table or add rows manually.',
+    rowCount: n => `${n} row(s)`,
+    optional: '(optional)',
+    removeRow: 'Remove row',
+    recordLabel: 'RECORD',
+    confidenceHigh: 'high',
+    confidenceMedium: 'medium',
+    confidenceLow: 'low',
+    promptContent: `You are an expert in scientific journal classification.
+
+Below is a list of journals. For each one, classify the MAIN AREA using only one of the categories below:
+
+CATEGORIES:
+- Dentistry
+- Medicine
+- Nursing
+- Pharmacy
+- Public Health
+- Multidisciplinary in Health
+- Biology / Basic Sciences
+- Engineering / Technology
+- Other area (specify)
+
+RULES:
+- Respond ONLY with a markdown table, with no text before or after it, no title, no introduction, no conclusion, and no item numbering outside the table
+- The table must follow EXACTLY the format of the example below, including the header, column order, and alignment style
+- HIGH confidence = the journal name makes the area evident
+- MEDIUM confidence = the area can be inferred from the specialty, but is not obvious
+- LOW confidence = generic or unknown journal, difficult to classify
+- If a journal could belong to more than one area, choose the MAIN area and indicate the secondary areas in the "Secondary Areas" column; if there are no secondary areas, leave "-"
+- Do not invent information. If you do not recognize the journal, mark confidence as LOW
+- Do not stop the table even if the list is long. The response must be one continuous table, from the first to the last journal
+
+TABLE EXAMPLE (follow this format exactly):
+
+| # | Journal | Main Area | Confidence | Secondary Areas |
+|---|:---|:---|:---|:---|
+| 1 | BMC oral health | Dentistry | High | - |
+| 2 | Journal of esthetic and restorative dentistry | Dentistry | High | - |
+| 3 | Medical science monitor | Medicine | High | - |
+| 4 | American journal of dentistry | Dentistry | High | - |
+| 5 | Clinical oral investigations | Dentistry | High | - |
+| 6 | Restorative dentistry & endodontics | Dentistry | High | - |
+| 7 | Journal of dentistry | Dentistry | High | - |
+| 8 | Frontiers in dental medicine | Dentistry | High | - |
+| 9 | The Journal of prosthetic dentistry | Dentistry | High | - |
+| 10 | Journal of prosthodontics | Dentistry | High | - |
+| 11 | Journal of Indian Prosthodontic Society | Dentistry | High | - |
+| 12 | The journal of contemporary dental practice | Dentistry | High | - |
+| 13 | Journal of functional biomaterials | Engineering / Technology | High | Dentistry, Biology |
+| 14 | Australian dental journal | Dentistry | High | - |
+| 15 | Journal of the mechanical behavior of biomedical materials | Engineering / Technology | High | Biology, Medicine |
+
+JOURNAL LIST:
+[paste your list here, one per line]`
+  }
+};
+
+function t(key, ...args) {
+  const value = TRANSLATIONS[language][key];
+  return typeof value === 'function' ? value(...args) : value;
+}
+
+function toggleLanguage() {
+  language = language === 'pt' ? 'en' : 'pt';
+  applyLanguage();
+}
+
+function applyLanguage() {
+  document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
+  document.title = t('appTitle');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.getElementById('lang-btn').textContent = language === 'pt' ? '🇺🇸 EN' : '🇧🇷 PT';
+  document.getElementById('theme-btn').textContent = dark ? t('themeLight') : t('themeDark');
+  renderFields();
+  populateDedupSelect();
+  updateCount();
+  updateDedupInfo();
+  if (loadedFileName) {
+    document.getElementById('file-info').textContent = t('fileInfo', loadedFileName, parsedRecords.length);
+  }
+  if (typeof classifierRows !== 'undefined') renderReviewTable();
+  if (parsedRecords.length > 0 && selectedFields.size > 0 &&
+      document.getElementById('preview-section').style.display === 'block') {
+    const output = buildOutput();
+    const preview = output.substring(0, 3000) + (output.length > 3000 ? `\n${t('truncatedPreview')}` : '');
+    document.getElementById('preview-box').textContent = preview;
+    const recCount = getRecords().length;
+    const dedupNote = recCount < parsedRecords.length ? ` (${t('duplicatesRemoved', parsedRecords.length - recCount)})` : '';
+    document.getElementById('stats-text').textContent =
+      `${t('records', recCount)}${dedupNote} · ${t('fields', selectedFields.size)} · ${t('characters', output.length.toLocaleString(language === 'pt' ? 'pt-BR' : 'en-US'))}`;
+  }
+}
+
+const RIS_FIELDS = [
+  { tag: 'TY', desc: 'Tipo de documento (Type) – no caso, JOUR = Journal', descEn: 'Document type (Type) – in this case, JOUR = Journal', label: 'Tipo de documento', labelEn: 'Document type' },
+  { tag: 'TI', desc: 'Título (Title)', descEn: 'Title', label: 'Título', labelEn: 'Title' },
+  { tag: 'AU', desc: 'Autor(es) (Author)', descEn: 'Author(s)', label: 'Autor(es)', labelEn: 'Author(s)', group: true },
+  { tag: 'T2', desc: 'Título do periódico (Secondary Title) – o nome do journal', descEn: 'Journal title (Secondary Title)', label: 'Título do periódico', labelEn: 'Journal title' },
+  { tag: 'AB', desc: 'Resumo (Abstract)', descEn: 'Abstract', label: 'Resumo', labelEn: 'Abstract' },
+  { tag: 'CY', desc: 'País (Country)', descEn: 'Country', label: 'País', labelEn: 'Country' },
+  { tag: 'DA', desc: 'Data (Date)', descEn: 'Date', label: 'Data', labelEn: 'Date' },
+  { tag: 'PY', desc: 'Ano de publicação (Publication Year)', descEn: 'Publication year', label: 'Ano de publicação', labelEn: 'Publication year' },
+  { tag: 'DO', desc: 'DOI (Digital Object Identifier)', descEn: 'DOI (Digital Object Identifier)', label: 'DOI', labelEn: 'DOI' },
+  { tag: 'VL', desc: 'Volume', descEn: 'Volume', label: 'Volume', labelEn: 'Volume' },
+  { tag: 'IS', desc: 'Número (Issue)', descEn: 'Issue number', label: 'Número', labelEn: 'Issue' },
+  { tag: 'SP', desc: 'Página inicial (Start Page)', descEn: 'Start page', label: 'Página inicial', labelEn: 'Start page' },
+  { tag: 'EP', desc: 'Página final (End Page)', descEn: 'End page', label: 'Página final', labelEn: 'End page' },
+  { tag: 'J2', desc: 'Abreviação do periódico (Journal Abbreviation)', descEn: 'Journal abbreviation', label: 'Abreviação do periódico', labelEn: 'Journal abbreviation' },
+  { tag: 'LA', desc: 'Idioma (Language)', descEn: 'Language', label: 'Idioma', labelEn: 'Language' },
+  { tag: 'SN', desc: 'ISSN (ISSN number)', descEn: 'ISSN (ISSN number)', label: 'ISSN', labelEn: 'ISSN' },
+  { tag: 'KW', desc: 'Palavras-chave (Keywords)', descEn: 'Keywords', label: 'Palavras-chave', labelEn: 'Keywords', group: true },
+  { tag: 'ER', desc: 'Fim do registro (End of Record)', descEn: 'End of record', label: 'Fim do registro', labelEn: 'End of record' },
+];
+
+let parsedRecords = [];
+let selectedFields = new Set();
+
+/* Theme toggle */
+let dark = false;
+function toggleTheme() {
+  dark = !dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  document.getElementById('theme-btn').textContent = dark ? t('themeLight') : t('themeDark');
+}
+
+/* Render table rows */
+function renderFields() {
+  const tbody = document.getElementById('fields-body');
+  tbody.innerHTML = '';
+  RIS_FIELDS.forEach(f => {
+    const tr = document.createElement('tr');
+    tr.dataset.tag = f.tag;
+    const checked = selectedFields.has(f.tag);
+    tr.innerHTML = `
+      <td><input type="checkbox" id="cb_${f.tag}" value="${f.tag}"${checked ? ' checked' : ''}></td>
+      <td><span class="field-tag${f.group ? ' grouped' : ''}">${f.tag}</span></td>
+      <td>${language === 'pt' ? f.desc : f.descEn}</td>`;
+    tr.classList.toggle('checked', checked);
+    tr.addEventListener('click', e => {
+      if (e.target.tagName !== 'INPUT') {
+        const cb = tr.querySelector('input');
+        cb.checked = !cb.checked;
+      }
+      toggleField(f.tag, tr.querySelector('input').checked);
+      tr.classList.toggle('checked', tr.querySelector('input').checked);
+    });
+    tr.querySelector('input').addEventListener('change', e => {
+      toggleField(f.tag, e.target.checked);
+      tr.classList.toggle('checked', e.target.checked);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleField(tag, checked) {
+  if (checked) selectedFields.add(tag);
+  else selectedFields.delete(tag);
+  updateCount();
+}
+
+function updateCount() {
+  document.getElementById('selected-count').textContent = t('selectedCount', selectedFields.size);
+  const ok = parsedRecords.length > 0 && selectedFields.size > 0;
+  document.getElementById('btn-preview').disabled = !ok;
+  document.getElementById('btn-export').disabled  = !ok;
+}
+
+function selectAll() {
+  document.querySelectorAll('#fields-body input').forEach(cb => {
+    cb.checked = true;
+    cb.closest('tr').classList.add('checked');
+    selectedFields.add(cb.value);
+  });
+  updateCount();
+}
+
+function deselectAll() {
+  document.querySelectorAll('#fields-body input').forEach(cb => {
+    cb.checked = false;
+    cb.closest('tr').classList.remove('checked');
+  });
+  selectedFields.clear();
+  updateCount();
+}
+
+/* File upload */
+const uploadArea = document.getElementById('upload-area');
+const fileInput  = document.getElementById('file-input');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) readFile(e.target.files[0]); });
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    parseRIS(e.target.result);
+    loadedFileName = file.name;
+    const info = document.getElementById('file-info');
+    info.style.display = 'block';
+    info.textContent = t('fileInfo', file.name, parsedRecords.length);
+    updateCount();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseRIS(text) {
+  parsedRecords = [];
+  const lines = text.split(/\r?\n/);
+  let current = null;
+  lines.forEach(line => {
+    const match = line.match(/^([A-Z0-9]{2})  - (.*)$/);
+    if (match) {
+      const tag = match[1], value = match[2].trim();
+      if (tag === 'TY') { current = {}; parsedRecords.push(current); }
+      if (current) { if (!current[tag]) current[tag] = []; current[tag].push(value); }
+    }
+  });
+  parsedRecords = parsedRecords.filter(r => Object.keys(r).length > 0);
+}
+
+/* Dedup helpers */
+function updateDedupSelect() {
+  const on = document.getElementById('dedup-on').checked;
+  const sel = document.getElementById('dedup-field');
+  sel.disabled = !on;
+  if (!on) {
+    sel.value = '';
+    document.getElementById('dedup-info').textContent = '';
+  }
+  updateDedupInfo();
+}
+
+function updateDedupInfo() {
+  const on = document.getElementById('dedup-on').checked;
+  const key = document.getElementById('dedup-field').value;
+  const info = document.getElementById('dedup-info');
+  if (!on || !key || parsedRecords.length === 0) { info.textContent = ''; return; }
+  const unique = getDeduped(key).length;
+  const removed = parsedRecords.length - unique;
+  info.textContent = `${t('uniqueRecords', unique)} · ${t('duplicatesRemoved', removed)}`;
+}
+
+function populateDedupSelect() {
+  const sel = document.getElementById('dedup-field');
+  const currentValue = sel.value;
+  // keep first placeholder option
+  while (sel.options.length > 1) sel.remove(1);
+  sel.options[0].textContent = t('dedupPlaceholder');
+  RIS_FIELDS.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.tag;
+    opt.textContent = `${f.tag} — ${language === 'pt' ? f.label : f.labelEn}`;
+    sel.appendChild(opt);
+  });
+  sel.value = currentValue;
+}
+
+function getDeduped(keyTag) {
+  const seen = new Set();
+  return parsedRecords.filter(rec => {
+    const keyVal = rec[keyTag] ? rec[keyTag][0].trim().toLowerCase() : '__empty__';
+    if (seen.has(keyVal)) return false;
+    seen.add(keyVal);
+    return true;
+  });
+}
+
+function getRecords() {
+  const on = document.getElementById('dedup-on').checked;
+  const key = document.getElementById('dedup-field').value;
+  if (on && key) return getDeduped(key);
+  return parsedRecords;
+}
+
+function buildOutput() {
+  const records = getRecords();
+  let lines = [];
+  records.forEach((rec, i) => {
+    lines.push(`=== ${t('recordLabel')} ${i + 1} ===`);
+    RIS_FIELDS.forEach(f => {
+      if (!selectedFields.has(f.tag)) return;
+      if (rec[f.tag]) {
+        lines.push(`${language === 'pt' ? f.label : f.labelEn}: ${rec[f.tag].join(' | ')}`);
+      }
+    });
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function generatePreview() {
+  const output = buildOutput();
+  const preview = output.substring(0, 3000) + (output.length > 3000 ? `\n${t('truncatedPreview')}` : '');
+  document.getElementById('preview-box').textContent = preview;
+  const recCount = getRecords().length;
+  const dedupNote = recCount < parsedRecords.length ? ` (${t('duplicatesRemoved', parsedRecords.length - recCount)})` : '';
+  document.getElementById('stats-text').textContent =
+    `${t('records', recCount)}${dedupNote} · ${t('fields', selectedFields.size)} · ${t('characters', output.length.toLocaleString(language === 'pt' ? 'pt-BR' : 'en-US'))}`;
+  document.getElementById('preview-section').style.display = 'block';
+  document.getElementById('preview-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function exportTXT() {
+  const output = buildOutput();
+  const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dados_extraidos.txt';
+  a.click();
+}
+
+renderFields();
+populateDedupSelect();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════════════════════════════════════════════════ */
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-text-content').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy-prompt');
+    const icon = document.getElementById('copy-icon');
+    const label = document.getElementById('copy-label');
+    btn.classList.add('copied');
+    icon.textContent = '✓';
+    label.textContent = t('copied');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      icon.textContent = '📋';
+      label.textContent = t('copyPrompt');
+    }, 2200);
+  }).catch(() => {
+    // Fallback for older browsers
+    const range = document.createRange();
+    range.selectNode(document.getElementById('prompt-text-content'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLASSIFIER MODULE
+═══════════════════════════════════════════════════════════════════════════ */
+
+const AREA_OPTIONS = [
+  'Dentistry',
+  'Medicine — Other area',
+  'Outside Health',
+  'Multidisciplinary — Area unclear'
+];
+
+const CONF_OPTIONS = ['high', 'medium', 'low'];
+
+function areaLabel(area) {
+  const labels = {
+    'Dentistry': t('areaDentistry'),
+    'Medicine — Other area': t('areaMedicine'),
+    'Outside Health': t('areaOutside'),
+    'Multidisciplinary — Area unclear': t('areaMulti')
+  };
+  return labels[area] || area;
+}
+
+function confidenceLabel(confidence) {
+  const labels = {
+    high: t('confidenceHigh'),
+    medium: t('confidenceMedium'),
+    low: t('confidenceLow')
+  };
+  return labels[confidence] || confidence;
+}
+
+// Mapping rules (case-insensitive match)
+function mapArea(raw) {
+  if (!raw) return 'Multidisciplinary — Area unclear';
+  const v = raw.trim().toLowerCase();
+
+  // Dentistry
+  if (/odontologia|dentistry|dental/.test(v))
+    return 'Dentistry';
+
+  // Medicine — Other area
+  if (/medicina\b|enfermagem|farmácia|farmacia|saúde pública|saude publica|nursing|pharmacy|public health/.test(v))
+    return 'Medicine — Other area';
+
+  // Outside Health — match "engenharia / tecnologia" and similar slash-separated values too
+  if (/engenharia|tecnologia|biologia|ciências básicas|ciencias basicas|química|quimica|física|fisica|engineering|technology|outside|other/.test(v))
+    return 'Outside Health';
+
+  // Multidisciplinary — catches "multidisciplinar em saúde", "multidisciplinar", "baixa", unclear
+  if (/multidisciplin|unclear|baixa|outra/.test(v))
+    return 'Multidisciplinary — Area unclear';
+
+  // Default
+  return 'Multidisciplinary — Area unclear';
+}
+
+function mapConf(raw) {
+  if (!raw) return 'medium';
+  const v = raw.trim().toLowerCase();
+  if (/^(high|alta)$/.test(v))   return 'high';
+  if (/^(low|baixa)$/.test(v))   return 'low';
+  if (/^(medium|média|media|moderada)$/.test(v)) return 'medium';
+  // Partial matches as fallback
+  if (/alta|high/.test(v))   return 'high';
+  if (/baixa|low/.test(v))   return 'low';
+  return 'medium';
+}
+
+// Parse markdown table
+function parseMarkdownTable(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.startsWith('|'));
+  const rows = [];
+  for (const line of lines) {
+    // Skip separator rows like |---|---| or |:---|:---|
+    if (/^\|[\s|:|-]+\|$/.test(line)) continue;
+    const cells = line.split('|').map(c => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1);
+    if (cells.length === 0) continue;
+    rows.push(cells);
+  }
+  return rows;
+}
+
+// Detect and strip a leading numeric index column (e.g. "| # |" or "| 1 |")
+function stripNumericIndex(rows) {
+  if (rows.length === 0) return rows;
+  // Check if the first data row (after possible header) starts with a number or "#"
+  const checkRow = rows[0];
+  const firstCell = (checkRow[0] || '').trim();
+  if (/^#$/.test(firstCell) || /^\d+$/.test(firstCell)) {
+    return rows.map(r => r.slice(1));
+  }
+  return rows;
+}
+
+let classifierRows = []; // [{journal, area, confidence, secondary}]
+let filteredIndices = null; // null = show all; otherwise array of indices into classifierRows matching the search
+let currentPage = 1;
+let pageSize = 100;
+let uploadedFileText = null; // raw text loaded via "Carregar arquivo", used instead of the textarea when present
+
+function totalPages() {
+  const n = filteredIndices !== null ? filteredIndices.length : classifierRows.length;
+  return Math.max(1, Math.ceil(n / pageSize));
+}
+
+function getVisibleIndices() {
+  return filteredIndices !== null ? filteredIndices : classifierRows.map((_, i) => i);
+}
+
+// Large tables (tens/hundreds of thousands of rows) are impractical to paste into a
+// textarea and can freeze the tab if pasted anyway — load them from a file instead.
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('file-upload-status');
+  statusEl.style.color = 'var(--text-muted)';
+  statusEl.textContent = t('processing');
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    uploadedFileText = reader.result;
+    const lineCount = uploadedFileText.split(/\r?\n/).filter(l => l.trim().startsWith('|')).length;
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = t('fileLoaded', file.name, lineCount);
+    const input = document.getElementById('llm-input');
+    input.value = '';
+    input.placeholder = language === 'pt'
+      ? `📂 Arquivo "${file.name}" carregado (${lineCount} linha(s) de tabela). Clique em Processar.`
+      : `📂 File "${file.name}" loaded (${lineCount} table row(s)). Click Process.`;
+  };
+  reader.onerror = () => {
+    statusEl.style.color = '#d04060';
+    statusEl.textContent = t('fileLoadError');
+    uploadedFileText = null;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function processLLMInput() {
+  const raw = uploadedFileText !== null ? uploadedFileText : document.getElementById('llm-input').value;
+  const statusEl = document.getElementById('parse-status');
+  statusEl.style.color = 'var(--text-muted)';
+  statusEl.textContent = t('processing');
+
+  // Defer the heavy synchronous parse one tick so the browser can paint the
+  // "Processando…" status first — matters for very large (100k+ row) tables.
+  setTimeout(() => {
+    let parsed = parseMarkdownTable(raw);
+
+    if (parsed.length === 0) {
+      statusEl.textContent = t('noTableRecognized');
+      statusEl.style.color = '#d04060';
+      return;
+    }
+
+    // Detect and strip header row (checks first cell of first row)
+    let dataRows = parsed;
+    const firstCell = (parsed[0][0] || '').trim().toLowerCase();
+    const isHeader = ['#', 'periódico', 'periodico', 'journal', 'n', 'no', 'nº'].includes(firstCell)
+      || /periód|journal|periodi/.test(firstCell);
+    if (isHeader) {
+      dataRows = parsed.slice(1);
+    }
+
+    // Detect and strip leading numeric index column from ALL rows (including remaining header check)
+    dataRows = stripNumericIndex(dataRows);
+
+    // Clean "-" as empty secondary areas
+    classifierRows = dataRows.map(cells => ({
+      journal:    cells[0] || '',
+      area:       mapArea(cells[1] || ''),
+      confidence: mapConf(cells[2] || ''),
+      secondary:  (cells[3] || '').replace(/^[-–—]+$/, '').trim()
+    }));
+
+    filteredIndices = null;
+    currentPage = 1;
+    const searchEl = document.getElementById('search-input');
+    if (searchEl) searchEl.value = '';
+
+    renderReviewTable();
+    statusEl.textContent = t('importedLines', classifierRows.length);
+    statusEl.style.color = 'var(--success)';
+  }, 10);
+}
+
+function handleSearchInput() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  if (!q) {
+    filteredIndices = null;
+  } else {
+    filteredIndices = [];
+    for (let i = 0; i < classifierRows.length; i++) {
+      if (classifierRows[i].journal.toLowerCase().includes(q)) filteredIndices.push(i);
+    }
+  }
+  currentPage = 1;
+  renderReviewTable();
+}
+
+function goToPage(p) {
+  currentPage = Math.min(Math.max(1, p), totalPages());
+  renderReviewTable();
+}
+
+function handlePageSizeChange() {
+  pageSize = parseInt(document.getElementById('page-size-select').value, 10) || 100;
+  currentPage = 1;
+  renderReviewTable();
+}
+
+// Only the rows for the current page are ever turned into DOM elements — rendering
+// all 180k+ rows at once as <input>/<select> elements would freeze or crash the tab.
+// classifierRows (the full array) always stays the source of truth for export.
+function renderReviewTable() {
+  const tbody = document.getElementById('review-tbody');
+  const paginationBar = document.getElementById('pagination-bar');
+  tbody.innerHTML = '';
+
+  if (classifierRows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><span class="es-icon">📋</span>${t('noDataYet')}</div></td></tr>`;
+    document.getElementById('row-count').textContent = '';
+    paginationBar.style.display = 'none';
+    return;
+  }
+
+  const visible = getVisibleIndices();
+
+  if (visible.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><span class="es-icon">🔍</span>${t('noResultsSearch')}</div></td></tr>`;
+    document.getElementById('row-count').textContent = t('rowCount', classifierRows.length);
+    paginationBar.style.display = 'none';
+    return;
+  }
+
+  const tp = totalPages();
+  if (currentPage > tp) currentPage = tp;
+  const start = (currentPage - 1) * pageSize;
+  const end = Math.min(start + pageSize, visible.length);
+  const pageIndices = visible.slice(start, end);
+
+  pageIndices.forEach(i => {
+    const row = classifierRows[i];
+    const tr = document.createElement('tr');
+
+    // Journal name
+    const tdJ = document.createElement('td');
+    tdJ.className = 'cell-journal';
+    const inpJ = document.createElement('input');
+    inpJ.type = 'text';
+    inpJ.className = 'editable-cell';
+    inpJ.value = row.journal;
+    inpJ.placeholder = language === 'pt' ? 'Nome do periódico…' : 'Journal name…';
+    inpJ.oninput = () => { classifierRows[i].journal = inpJ.value; };
+    tdJ.appendChild(inpJ);
+    tr.appendChild(tdJ);
+
+    // Area dropdown
+    const tdA = document.createElement('td');
+    const selA = document.createElement('select');
+    selA.className = 'review-select';
+    AREA_OPTIONS.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = areaLabel(opt);
+      if (opt === row.area) o.selected = true;
+      selA.appendChild(o);
+    });
+    selA.onchange = () => { classifierRows[i].area = selA.value; };
+    tdA.appendChild(selA);
+    tr.appendChild(tdA);
+
+    // Confidence dropdown
+    const tdC = document.createElement('td');
+    const selC = document.createElement('select');
+    selC.className = 'review-select';
+    CONF_OPTIONS.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = confidenceLabel(opt);
+      if (opt === row.confidence) o.selected = true;
+      selC.appendChild(o);
+    });
+    selC.onchange = () => {
+      classifierRows[i].confidence = selC.value;
+      updateConfStyle(selC);
+    };
+    updateConfStyle(selC);
+    tdC.appendChild(selC);
+    tr.appendChild(tdC);
+
+    // Secondary areas
+    const tdS = document.createElement('td');
+    const inpS = document.createElement('input');
+    inpS.type = 'text';
+    inpS.className = 'editable-cell';
+    inpS.value = row.secondary;
+    inpS.placeholder = t('optional');
+    inpS.oninput = () => { classifierRows[i].secondary = inpS.value; };
+    tdS.appendChild(inpS);
+    tr.appendChild(tdS);
+
+    // Remove button
+    const tdR = document.createElement('td');
+    tdR.style.textAlign = 'center';
+    const btnR = document.createElement('button');
+    btnR.className = 'btn-remove';
+    btnR.textContent = '✕';
+    btnR.title = t('removeRow');
+    btnR.onclick = () => {
+      classifierRows.splice(i, 1);
+      if (filteredIndices !== null) {
+        filteredIndices = filteredIndices.filter(idx => idx !== i).map(idx => idx > i ? idx - 1 : idx);
+      }
+      renderReviewTable();
+    };
+    tdR.appendChild(btnR);
+    tr.appendChild(tdR);
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('row-count').textContent = t('rowCount', classifierRows.length);
+
+  if (tp > 1) {
+    paginationBar.style.display = 'flex';
+    document.getElementById('page-indicator').textContent = t('pageIndicator', currentPage, tp, start + 1, end, visible.length);
+  } else {
+    paginationBar.style.display = 'none';
+  }
+}
+
+function updateConfStyle(sel) {
+  sel.className = 'review-select';
+  if (sel.value === 'high')   sel.classList.add('conf-high');
+  if (sel.value === 'medium') sel.classList.add('conf-medium');
+  if (sel.value === 'low')    sel.classList.add('conf-low');
+}
+
+function addBlankRow() {
+  classifierRows.push({ journal: '', area: 'Multidisciplinary — Area unclear', confidence: 'medium', secondary: '' });
+  filteredIndices = null;
+  const searchEl = document.getElementById('search-input');
+  if (searchEl) searchEl.value = '';
+  currentPage = totalPages();
+  renderReviewTable();
+  // Focus last journal input
+  const inputs = document.querySelectorAll('#review-tbody .cell-journal input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function clearClassifier() {
+  classifierRows = [];
+  filteredIndices = null;
+  currentPage = 1;
+  uploadedFileText = null;
+  const input = document.getElementById('llm-input');
+  input.value = '';
+  input.placeholder = t('llmInputPlaceholder');
+  const fileInput = document.getElementById('llm-file-input');
+  if (fileInput) fileInput.value = '';
+  document.getElementById('file-upload-status').textContent = '';
+  const searchEl = document.getElementById('search-input');
+  if (searchEl) searchEl.value = '';
+  document.getElementById('parse-status').textContent = '';
+  renderReviewTable();
+  document.getElementById('export-ok').style.display = 'none';
+}
+
+function exportJSON() {
+  // classifierRows is always kept in sync via each field's oninput/onchange handler
+  // (only the current page is in the DOM once pagination is active, so no DOM re-sync here).
+  const data = classifierRows
+    .filter(r => r.journal.trim() !== '')
+    .map(r => {
+      const entry = {
+        journal:    r.journal.trim().toLowerCase().replace(/\s+/g, ' '),
+        area:       r.area,
+        confidence: r.confidence
+      };
+      if (r.secondary && r.secondary.trim()) {
+        entry.secondary_areas = r.secondary.trim();
+      }
+      return entry;
+    });
+
+  if (data.length === 0) {
+    document.getElementById('parse-status').textContent = t('noJournalToExport');
+    document.getElementById('parse-status').style.color = '#d04060';
+    return;
+  }
+
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'classificacao_periodicos.json';
+  a.click();
+
+  const ok = document.getElementById('export-ok');
+  ok.style.display = 'inline-block';
+  ok.textContent = t('exportedJournals', data.length);
+  setTimeout(() => { ok.style.display = 'none'; }, 4000);
+}
+
+applyLanguage();
+</script>
+</body>
+</html>
